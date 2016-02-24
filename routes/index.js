@@ -176,7 +176,74 @@ router.put('/profile/:username', function(req, res){
 
     
 });
+/* Get all the events */
+router.get('/events', function(req, res){
+    
+    
+    Event.find({}, function(err, events){
+        
+        if(err){
+            console.log(err);
+            var responseobject = {message : "Error"};
+            res.status(500).jsonp(responseobject);
+        }else{
+            
+            var responseobject = {message: "Success",
+                                  details:  events
+                                 };
+            res.status(200).jsonp(responseobject);
+            
+        }
+        
+    });
+});
 
+
+/* Get All the events created by a user*/
+router.get('/events/:username', function(req, res){
+    var username = req.params.username;
+    
+    Event.find({username: username}, function(err, events){
+        
+        if(err){
+            console.log(err);
+            var responseobject = {message : "Error"};
+            res.status(500).jsonp(responseobject);
+        }else{
+            
+            var responseobject = {message: "Success",
+                                  details:  events
+                                 };
+            res.status(200).jsonp(responseobject);
+            
+        }
+        
+    });
+});
+
+/* Get a specific  event based on the parameter */
+router.get('/event/:eventid', function(req, res){
+    
+    var eventid = req.params.eventid;
+    console.log(eventid);
+    
+    Event.find({_id: eventid}, function(err, events){
+        
+        if(err){
+            console.log(err);
+            var responseobject = {message : "Error"};
+            res.status(500).jsonp(responseobject);
+        }else{
+            
+            var responseobject = {message: "Success",
+                                  details:  events
+                                 };
+            res.status(200).jsonp(responseobject);
+            
+        }
+        
+    });
+});
 
 router.post('/createevent', function(req, res){
     
