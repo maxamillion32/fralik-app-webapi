@@ -4,6 +4,7 @@ var jwt = require('jwt-simple');
 var User = require('../Lib/User');
 var Event = require('../Lib/Event');
 var Profile = require('../Lib/Profile');
+var Requests = require('../Lib/Requests');
 
 var secret = 'saldjjakdhadlkqwiekasdljafaljsnadiwsx';
 
@@ -279,6 +280,22 @@ Sample Event JSON POST
 }
 */
     
+    var pickup = req.body.pickup;
+    console.log("Privacy type is "+req.body.privacyType);
+    
+    console.log("The object is " + JSON.stringify(pickup));
+    console.log("The object is " + pickup.length);
+
+    console.log("The object is 0" + JSON.stringify(pickup[0]));
+    console.log("The location is 0" + JSON.stringify(pickup[0].pickuplocation));
+    console.log("The time is 0" + JSON.stringify(pickup[0].pickuptime));
+
+
+   /* console.log("The location is 1" + JSON.stringify(pickup[1].pickuplocation));
+    console.log("The time is 1" + JSON.stringify(pickup[1].pickuptime));
+*/
+
+    
 console.log("Recieved values are   "+ req.body.eventName
                                 +" "+ req.body.eventType
                                 +" "+ req.body.seatsAvailable
@@ -296,9 +313,6 @@ console.log("Recieved values are   "+ req.body.pickUpTimeHour
                                 
 console.log("Recieved values are   "+ req.body.eventLocationLat
                                 +" "+ req.body.eventLocationLng);
-            
-console.log("Recieved values are   "+ req.body.pickUpLocationLat
-                                +" "+ req.body.pickUpLocationLng);
 
 console.log("Recieved values are   "+ req.body.eventLocation
                                 +" "+ req.body.pickUpLocation);
@@ -309,6 +323,7 @@ console.log("Recieved values are   "+ req.body.eventLocation
     
     newEvent.eventname  = req.body.eventName;
     newEvent.eventtype  = req.body.eventType;
+    newEvent.privacytype = req.body.privacyType;
     
     newEvent.seatsavailable = req.body.seatsAvailable;
     newEvent.preferences    = req.body.preferences;
@@ -320,17 +335,12 @@ console.log("Recieved values are   "+ req.body.eventLocation
     newEvent.eventtimehour   = req.body.eventTimeHour;
     newEvent.eventtimeminute = req.body.eventTimeMinute
                                 
-    newEvent.pickuptimehour   = req.body.pickUpTimeHour;
-    newEvent.pickuptimeminute = req.body.pickUpTimeMinute;
                                 
     newEvent.eventlocationlat = req.body.eventLocationLat;
     newEvent.eventlocationlng = req.body.eventLocationLng;
             
-    newEvent.pickuplocationlat = req.body.pickUpLocationLat;
-    newEvent.pickuplocationlng = req.body.pickUpLocationLng;
-
     newEvent.eventlocation = req.body.eventLocation;
-    newEvent.pickuplocation = req.body.pickUpLocation;
+    newEvent.pickup = pickup;
     
     newEvent.save(function(err, savedEvent){
     
@@ -346,6 +356,41 @@ console.log("Recieved values are   "+ req.body.eventLocation
             res.status(200).json(responseObject);
         }
     });
+    
+});
+
+
+router.post('/request', function(req, res){
+   
+    console.log("Recieved values are   "+ req.body.eventName
+                                +" "+ req.body.eventId
+                                +" "+ req.body.createdUser
+                                +" "+ req.body.requestedUser);
+            
+ console.log("Recieved values are  "+ req.body.seatsRequested);
+    
+    var newrequest = new Requests();
+    newrequest.eventname = req.body.eventName;
+
+    newrequest.eventid = req.body.eventId;
+    newrequest.createduser = req.body.createdUser;
+    newrequest.requesteduser = req.body.requestedUser;
+    newrequest.seatsrequested = req.body.seatsRequested;
+    
+    newrequest.save(function(err, savedrequest){
+        
+        if(err){
+            
+            console.log(err);
+            res.status(500).jsonp({message: "Error!"});
+        }else{
+         
+                res.status(200).jsonp({message: "Successfully requested the ride"});
+        }
+        
+        
+    })
+    
     
 });
 

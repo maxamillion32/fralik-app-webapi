@@ -6,6 +6,7 @@ var eventSchema = new mongoose.Schema({
     
     eventname   : String,
     eventtype   : String,
+    privacytype : Number,
     seatsavailable: Number,
     preferences: String,
     
@@ -15,18 +16,13 @@ var eventSchema = new mongoose.Schema({
     
     eventtimehour: Number,
     eventtimeminute: Number,
-    
-    pickuptimehour: Number,
-    pickuptimeminute: Number,
-    
+        
     eventlocationlat: Number,
     eventlocationlng: Number,
-    
-    pickuplocationlat: Number,
-    pickuplocationlng: Number,
-    
     eventlocation: String,
-    pickuplocation: String
+    
+    pickup: [{pickuptime: String, pickuplocation: String}],
+
 });
 
 var Event = mongoose.model('events'/*Collection name*/, eventSchema);
