@@ -158,6 +158,9 @@ router.put('/profile/:username', function(req, res){
                                 emergencycntnumber2: emergencycntnumber2
                               }
                        };
+    
+    var condition_1 = {requesteduser : finduser};
+    var updatevalues_1 = {$set: {requesteduseravatar: avatar}}
 
     Profile.findOneAndUpdate(condition, updatevalues, {upsert: true},function(err, updatedValues){
         
@@ -166,6 +169,16 @@ router.put('/profile/:username', function(req, res){
                 res.status(500).send({message : "Error updating the values."});
             }
             else{
+                
+                Requests.update(condition_1, updatevalues_1, {multi: true}, function(err, update){
+                    if(err){
+                        console.log(err);
+                    }
+                    else{
+                        console.log("updated");
+                    }
+                } );
+                
                 var responseobject = { 
                                     message     : "Success",
                                     username    : finduser,
@@ -359,7 +372,7 @@ console.log("Recieved values are   "+ req.body.eventLocation
     
 });
 
-
+/* When someone request you for a ride */
 router.post('/request', function(req, res){
    
     console.log("Recieved values are   "+ req.body.eventName
@@ -376,7 +389,8 @@ router.post('/request', function(req, res){
     newrequest.createduser = req.body.createdUser;
     newrequest.requesteduser = req.body.requestedUser;
     newrequest.seatsrequested = req.body.seatsRequested;
-    
+    newrequest.requesteduseravatar = req.body.requestedUserAvatar;
+
     newrequest.save(function(err, savedrequest){
         
         if(err){
@@ -386,13 +400,27 @@ router.post('/request', function(req, res){
         }else{
          
                 res.status(200).jsonp({message: "Successfully requested the ride"});
-        }
-        
-        
+        }  
     })
-    
-    
 });
+
+
+router.get('/notification/:username', function(req, res){
+    
+    var username = req.params.username;
+    console.log(username);
+        
+    Requests.find({createduser: username, seen: false},{'__v':0},function(err, request){
+        
+        if(err){
+            res.status(500).jsonp({message : "Error!"});
+        }
+        else{
+            res.status(200).jsonp(request);
+        }
+    });
+});
+
 
 /*router.post('/createevent', middlewareAuth,function(req, res){});
 router.get('/getevents', middlewareAuth,function(req, res){})
