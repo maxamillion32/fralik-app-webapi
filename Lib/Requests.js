@@ -8,7 +8,7 @@ var requestSchema = new mongoose.Schema({
     createduser: String,
     seatsrequested: Number,
     requesteduseravatar: String,
-    status: {type: Boolean, default: false},      // false: reject, true: accept
+    status: {type: String, default: "Not Decided"},      // Not Decided, Accepted, Rejected
     seen: {type: Boolean, default: false}         // false: Unseen, true: Seen
 });
 

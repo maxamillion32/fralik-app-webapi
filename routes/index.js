@@ -194,7 +194,7 @@ router.put('/profile/:username', function(req, res){
 router.get('/events', function(req, res){
     
     
-    Event.find({}, function(err, events){
+    Event.find({privacytype : 0}, function(err, events){
         
         if(err){
             console.log(err);
@@ -404,6 +404,100 @@ router.post('/request', function(req, res){
     })
 });
 
+/* Get all the events requested by a User */
+router.get('/requests/:username', function(req, res){
+    
+        var username = req.params.username;
+        Requests.find({requesteduser: username},{'__v':0},function(err, request){
+        
+        if(err){
+            res.status(500).jsonp({message : "Error!"});
+        }
+        else{
+            res.status(200).jsonp(request);
+        }
+    });
+    
+});
+
+
+/* Get all the rides requested for a User */
+router.get('/riderequests/:username', function(req, res){
+    
+        var username = req.params.username;
+        Requests.find({createduser: username, seen: false},{'__v':0},function(err, request){
+        
+        if(err){
+            res.status(500).jsonp({message : "Error!"});
+        }
+        else{
+            res.status(200).jsonp(request);
+        }
+    });
+    
+});
+
+
+router.put('/request', function(req, res){
+    
+    var eventid = req.body.eventid;
+    var status = req.body.status;
+    var requesteduser = req.body.requesteduser;
+    var seatsrequested = req.body.seatsrequested;
+    
+    
+     console.log("Recieved values are"+ req.body.eventid
+                                +" "+ req.body.status
+                                +" "+ req.body.requesteduser);
+    
+    
+    
+    var condition = {eventid: eventid, requesteduser: requesteduser};
+    var value = {$set: {status: status}};
+    
+    Requests.update(condition, value, function(err, saved){
+        
+         if(err){
+            res.status(500).jsonp({message : "Error!"});
+        }
+        else{
+            
+            
+               if(status === "Accepted"){
+                    Event.findById(eventid, function (err, myDocument) {
+
+                        if(err){
+                            
+                        }
+                        else
+                        {
+                            var temporarycount = myDocument.seatsavailable;
+                            var remaining = temporarycount - seatsrequested;
+                            console.log("Remaining seats are "+ remaining);
+                        
+                            var condition_1 = {$set : { seatsavailable: remaining}};
+                        
+                             Event.update({_id: eventid}, condition_1,function (err, myDocument) {
+
+                                            if(err)
+                                                {
+                                                  console.log("Couldnot insert remaining");
+
+                                                }
+                                });            
+            
+                    }
+               });
+               }
+                                   
+            
+                res.status(200).jsonp({message: "Successfully updated"});
+            }
+    });
+                            
+        
+        
+    });
 
 router.get('/notification/:username', function(req, res){
     
@@ -416,6 +510,7 @@ router.get('/notification/:username', function(req, res){
             res.status(500).jsonp({message : "Error!"});
         }
         else{
+        
             res.status(200).jsonp(request);
         }
     });

@@ -6,7 +6,7 @@ var eventSchema = new mongoose.Schema({
     
     eventname   : String,
     eventtype   : String,
-    privacytype : Number,
+    privacytype : Number,               // Public: 0 Unlisted: 1 // Not boolean because may add different types in future
     seatsavailable: Number,
     preferences: String,
     
