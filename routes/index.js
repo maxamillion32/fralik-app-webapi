@@ -54,9 +54,6 @@ router.post('/register', function(req, res){
     var newuser = new User();
     newuser.username = username;
     newuser.password = password;
-    /*newuser.phonenumber = phonenumber;
-    newuser.firstname = firstname;
-    newuser.lastname = lastname;*/
 
     newuser.save(function(err, savedUser){
     
@@ -88,15 +85,12 @@ router.post('/register', function(req, res){
             
             var responseObject = {  message : "Successfully Registered"};
                     res.status(200).json(responseObject);
-            
         }
         
-    });
-    
-    
-    
-    
+    });    
 });
+
+
 
 router.get('/profile/:username', function(req, res){
     
@@ -259,6 +253,7 @@ router.get('/event/:eventid', function(req, res){
     });
 });
 
+/* Create Event endpoint */
 router.post('/createevent', function(req, res){
     
 /*
@@ -297,16 +292,7 @@ Sample Event JSON POST
     console.log("Privacy type is "+req.body.privacyType);
     
     console.log("The object is " + JSON.stringify(pickup));
-    console.log("The object is " + pickup.length);
-
-    console.log("The object is 0" + JSON.stringify(pickup[0]));
-    console.log("The location is 0" + JSON.stringify(pickup[0].pickuplocation));
-    console.log("The time is 0" + JSON.stringify(pickup[0].pickuptime));
-
-
-   /* console.log("The location is 1" + JSON.stringify(pickup[1].pickuplocation));
-    console.log("The time is 1" + JSON.stringify(pickup[1].pickuptime));
-*/
+    console.log("The object is size " + pickup.length);
 
     
 console.log("Recieved values are   "+ req.body.eventName
@@ -421,7 +407,7 @@ router.get('/requests/:username', function(req, res){
 });
 
 
-/* Get all the rides requested for a User */
+/* Get all the ride requests for a User */
 router.get('/riderequests/:username', function(req, res){
     
         var username = req.params.username;
@@ -437,7 +423,7 @@ router.get('/riderequests/:username', function(req, res){
     
 });
 
-
+/* Update ride request, based on event created action (accept or reject)*/
 router.put('/request', function(req, res){
     
     var eventid = req.body.eventid;
@@ -445,12 +431,10 @@ router.put('/request', function(req, res){
     var requesteduser = req.body.requesteduser;
     var seatsrequested = req.body.seatsrequested;
     
-    
-     console.log("Recieved values are"+ req.body.eventid
+    console.log("Recieved values are "+ req.body.eventid
                                 +" "+ req.body.status
+                                +" "+  req.body.seatsrequested
                                 +" "+ req.body.requesteduser);
-    
-    
     
     var condition = {eventid: eventid, requesteduser: requesteduser};
     var value = {$set: {status: status}};
@@ -461,61 +445,79 @@ router.put('/request', function(req, res){
             res.status(500).jsonp({message : "Error!"});
         }
         else{
-            
-            
                if(status === "Accepted"){
-                    Event.findById(eventid, function (err, myDocument) {
+                    Event.findOne({_id: eventid }, function (err, myDocument) {
 
                         if(err){
-                            
+                            console.log(err);
                         }
                         else
                         {
-                            var temporarycount = myDocument.seatsavailable;
-                            var remaining = temporarycount - seatsrequested;
+                            
+                            console.log(myDocument.seatsavailable);
+                            
+                                                       
+                            var remaining = myDocument.seatsavailable - seatsrequested;
+                                                        
                             console.log("Remaining seats are "+ remaining);
+                            
+                            
+                            var condition_1 = {$set : { seatsavailable: remaining }};
+                            
                         
-                            var condition_1 = {$set : { seatsavailable: remaining}};
-                        
-                             Event.update({_id: eventid}, condition_1,function (err, myDocument) {
+                             Event.update({_id: eventid}, condition_1,function (err, updated) {
 
                                             if(err)
                                                 {
                                                   console.log("Couldnot insert remaining");
-
                                                 }
-                                });            
-            
+                                });   
                     }
                });
+               
                }
-                                   
-            
                 res.status(200).jsonp({message: "Successfully updated"});
             }
     });
-                            
-        
-        
-    });
+});
 
-router.get('/notification/:username', function(req, res){
+/* For the created user to get notification when other users request a ride */
+/*router.get('/notification/:username', function(req, res){
     
     var username = req.params.username;
     console.log(username);
         
-    Requests.find({createduser: username, seen: false},{'__v':0},function(err, request){
+    Requests.findOne({createduser: username, seen: false},{'__v':0},function(err, request){
         
         if(err){
             res.status(500).jsonp({message : "Error!"});
         }
         else{
         
-            res.status(200).jsonp(request);
+            console.log(JSON.stringify(request));
+            
+            if(request.length!=0){
+                var requestid = request.id;
+                console.log(request.id);
+
+                var updatevalues = {$set : {seen : true}};
+                Requests.update({_id: requestid}, updatevalues, function(err, done){
+
+                    if(err){
+                        console.log("Couldnot update seen");
+                        res.status(500).jsonp({message : "Error!"});
+                    }else{
+                        res.status(200).jsonp({message: "Successfully updated"});
+                    }
+                });  
+            }
+        res.status(200).jsonp({message: ""});
+
         }
     });
-});
 
+
+});*/
 
 /*router.post('/createevent', middlewareAuth,function(req, res){});
 router.get('/getevents', middlewareAuth,function(req, res){})
