@@ -4,6 +4,7 @@ var bodyParser  = require('body-parser');
 var mongoose    = require('mongoose');
 
 var routes  = require('./routes/index');
+var options = { server:{poolSize: 10}};
 
 var app = express();
 
@@ -11,7 +12,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-mongoose.connect('mongodb://localhost/hopin');
+mongoose.connect('mongodb://localhost/hopin', options);
 app.use('/', routes);
 
 // catch 404 and forward to error handler

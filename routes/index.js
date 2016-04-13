@@ -5,8 +5,32 @@ var User = require('../Lib/User');
 var Event = require('../Lib/Event');
 var Profile = require('../Lib/Profile');
 var Requests = require('../Lib/Requests');
-
 var secret = 'saldjjakdhadlkqwiekasdljafaljsnadiwsx';
+
+// Middleware that authenticates all the secret pages
+function checkAuth(req, res, next){
+    var token = req.headers.token;
+    console.log(token);
+    
+    if (token) {    
+        try{
+            var decoded = jwt.decode(token, secret);
+            req.decoded = decoded;
+            next();
+        }
+        catch(err)
+        {
+            console.log("Error decoding the token");
+            res.status(403).json({ message: "Invalid user"});
+        }
+    }
+    else{
+        res.status(403).json({ message: "Invalid user"});
+    }
+};
+
+
+//** EndPoints **//
 
 /* GET healthtest */
 router.get('/healthtest', function(req, res, next) {
@@ -59,7 +83,6 @@ router.post('/register', function(req, res){
     
         if(err){
             console.log("LOG: /Register - Couldnot register the user");
-            //console.log(err);
             var responseObject = {message : "Error!"};
             return   res.status(500).send(responseObject);
         }
@@ -92,7 +115,7 @@ router.post('/register', function(req, res){
 
 
 
-router.get('/profile/:username', function(req, res){
+router.get('/profile/:username', checkAuth, function(req, res){
     
     var finduser = req.params.username;
     
@@ -114,7 +137,7 @@ router.get('/profile/:username', function(req, res){
 
 });
 
-router.put('/profile/:username', function(req, res){
+router.put('/profile/:username', checkAuth,function(req, res){
     
     var finduser = req.params.username;
     console.log(finduser);
@@ -185,7 +208,7 @@ router.put('/profile/:username', function(req, res){
     
 });
 /* Get all the events */
-router.get('/events', function(req, res){
+router.get('/events', checkAuth,function(req, res){
     
     
     Event.find({privacytype : 0}, function(err, events){
@@ -196,8 +219,9 @@ router.get('/events', function(req, res){
             res.status(500).jsonp(responseobject);
         }else{
             
-            var responseobject = {message: "Success",
-                                  details:  events
+            var responseobject = {
+                                    message: "Success",
+                                    details:  events
                                  };
             res.status(200).jsonp(responseobject);
             
@@ -208,7 +232,7 @@ router.get('/events', function(req, res){
 
 
 /* Get All the events created by a user*/
-router.get('/events/:username', function(req, res){
+router.get('/events/:username', checkAuth,function(req, res){
     var username = req.params.username;
     
     Event.find({username: username}, function(err, events){
@@ -230,7 +254,7 @@ router.get('/events/:username', function(req, res){
 });
 
 /* Get a specific  event based on the parameter */
-router.get('/event/:eventid', function(req, res){
+router.get('/event/:eventid', checkAuth,function(req, res){
     
     var eventid = req.params.eventid;
     console.log(eventid);
@@ -254,7 +278,7 @@ router.get('/event/:eventid', function(req, res){
 });
 
 /* Create Event endpoint */
-router.post('/createevent', function(req, res){
+router.post('/createevent', checkAuth, function(req, res){
     
 /*
 Sample Event JSON POST
@@ -359,12 +383,14 @@ console.log("Recieved values are   "+ req.body.eventLocation
 });
 
 /* When someone request you for a ride */
-router.post('/request', function(req, res){
+router.post('/request', checkAuth, function(req, res){
    
-    console.log("Recieved values are   "+ req.body.eventName
+    
+  console.log("Recieved values are   "+ req.body.eventName
                                 +" "+ req.body.eventId
                                 +" "+ req.body.createdUser
-                                +" "+ req.body.requestedUser);
+                                +" "+ req.body.requestedUser
+                                +" "+ req.body.pickupLocation);
             
  console.log("Recieved values are  "+ req.body.seatsRequested);
     
@@ -375,6 +401,7 @@ router.post('/request', function(req, res){
     newrequest.createduser = req.body.createdUser;
     newrequest.requesteduser = req.body.requestedUser;
     newrequest.seatsrequested = req.body.seatsRequested;
+    newrequest.pickupLocation = req.body.pickupLocation;
     newrequest.requesteduseravatar = req.body.requestedUserAvatar;
 
     newrequest.save(function(err, savedrequest){
@@ -391,7 +418,7 @@ router.post('/request', function(req, res){
 });
 
 /* Get all the events requested by a User */
-router.get('/requests/:username', function(req, res){
+router.get('/requests/:username', checkAuth,function(req, res){
     
         var username = req.params.username;
         Requests.find({requesteduser: username},{'__v':0},function(err, request){
@@ -408,10 +435,10 @@ router.get('/requests/:username', function(req, res){
 
 
 /* Get all the ride requests for a User */
-router.get('/riderequests/:username', function(req, res){
+router.get('/riderequests/:username', checkAuth,function(req, res){
     
         var username = req.params.username;
-        Requests.find({createduser: username, seen: false},{'__v':0},function(err, request){
+        Requests.find({createduser: username},{'__v':0},function(err, request){
         
         if(err){
             res.status(500).jsonp({message : "Error!"});
@@ -424,7 +451,7 @@ router.get('/riderequests/:username', function(req, res){
 });
 
 /* Update ride request, based on event created action (accept or reject)*/
-router.put('/request', function(req, res){
+router.put('/request', checkAuth, function(req, res){
     
     var eventid = req.body.eventid;
     var status = req.body.status;
@@ -453,19 +480,13 @@ router.put('/request', function(req, res){
                         }
                         else
                         {
-                            
-                            console.log(myDocument.seatsavailable);
-                            
-                                                       
+                            console.log(myDocument.seatsavailable);                       
                             var remaining = myDocument.seatsavailable - seatsrequested;
                                                         
                             console.log("Remaining seats are "+ remaining);
-                            
-                            
                             var condition_1 = {$set : { seatsavailable: remaining }};
                             
-                        
-                             Event.update({_id: eventid}, condition_1,function (err, updated) {
+                            Event.update({_id: eventid}, condition_1,function (err, updated) {
 
                                             if(err)
                                                 {
@@ -482,7 +503,7 @@ router.put('/request', function(req, res){
 });
 
 /* For the created user to get notification when other users request a ride */
-/*router.get('/notification/:username', function(req, res){
+router.get('/notification/:username', function(req, res){
     
     var username = req.params.username;
     console.log(username);
@@ -494,11 +515,13 @@ router.put('/request', function(req, res){
         }
         else{
         
-            console.log(JSON.stringify(request));
+            if(request ==null){
+                console.log("null. no request notifications");
+            }
             
-            if(request.length!=0){
-                var requestid = request.id;
-                console.log(request.id);
+            if(request!=null){
+                var requestid = request._id;
+                console.log(requestid);
 
                 var updatevalues = {$set : {seen : true}};
                 Requests.update({_id: requestid}, updatevalues, function(err, done){
@@ -510,15 +533,63 @@ router.put('/request', function(req, res){
                         res.status(200).jsonp({message: "Successfully updated"});
                     }
                 });  
+            }else{
+                res.status(404).jsonp({message: "No updates"});
             }
-        res.status(200).jsonp({message: ""});
-
         }
     });
+});
 
 
-});*/
+router.get('/notifyrequester/:username', function(req, res){
+    
+    var username = req.params.username;
+    console.log(username);
+    
+    var condition = 
+        { $and: 
+         [
+             {requesteduser: username}, 
+             {requesterseen: false}, 
+             {  $or:
+                    [ 
+                        {status: "Accepted"}, 
+                        {status: "Rejected"} 
+                    ]
+             }
+         ]
+        };
 
+    Requests.findOne(condition, function(err, request){
+        
+        if(err){
+            res.status(404).jsonp({message: "error"});
+        }else{            
+
+                if(request!=null){
+                    var requestid = request._id;
+                    console.log(requestid);
+
+                    var updatevalues = {$set : {requesterseen : true}};
+                    Requests.update({_id: requestid}, updatevalues, function(err, done){
+
+                        if(err){
+                            console.log("Couldnot update seen");
+                            res.status(500).jsonp({message : "Error!"});
+                        }else{
+                            res.status(200).jsonp({message: "Successfully updated"});
+                        }
+                    });  
+                }
+                else{
+                    res.status(404).jsonp({message: "No updates"});
+                }
+        }
+        
+    });
+        
+    
+});    
 /*router.post('/createevent', middlewareAuth,function(req, res){});
 router.get('/getevents', middlewareAuth,function(req, res){})
 router.post('/requestevent', middlewareAuth,function(req, res){});
