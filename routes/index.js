@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var jwt = require('jwt-simple');
+var bcrypt = require('bcrypt');
 var User = require('../Lib/User');
 var Event = require('../Lib/Event');
 var Profile = require('../Lib/Profile');
@@ -41,26 +42,36 @@ router.post('/login', function(req, res){
 
     var username = req.body.username;
     var password = req.body.password;
+
     console.log("Recieved values are " + username + " " +password);
 
-    User.findOne({username: username, password: password}, function(err, user){
+    User.findOne({username: username}, function(err, user){
         if(err){
                 console.log("err");
+                res.status(404).jsonp({message : "Username not found"});
             }
         else{
-            if(!user){
-                    console.log("No user found");
-                    res.status(404).json({message : "Username not found"});
-                }
-            else{
-                    var payload = { user: user.username };
-                    var token = jwt.encode(payload, secret);
 
-                    var responseObject = {  message : "Successfully logged in.",
-                                            username: user.username,
-                                            token: token    };
-                    res.status(200).json(responseObject);
-            }
+                bcrypt.compare(password, user.password, function(err, success) {
+    
+                    if(err){
+                            console.log(err);
+                            console.log(JSON.stringify(res));
+
+                            res.status(403).json({message : "Invalid User"});
+                        }
+                        else{
+                            
+                            var payload = { user: user.username };
+                            var token = jwt.encode(payload, secret);
+
+                            var responseObject = {  message : "Successfully logged in.",
+                                                    username: user.username,
+                                                    token: token    };
+
+                            res.status(200).json(responseObject);
+                        }                    
+                    });
         }
     });    
 });
@@ -75,19 +86,29 @@ router.post('/register', function(req, res){
 
     console.log("Recieved values are " + username + " " +password +" "+ phonenumber +" "+firstname+" "+lastname);
     
-    var newuser = new User();
-    newuser.username = username;
-    newuser.password = password;
-
-    newuser.save(function(err, savedUser){
+    const saltRounds = 10;
+    bcrypt.hash(password, saltRounds, function(err, hash) {
     
         if(err){
-            console.log("LOG: /Register - Couldnot register the user");
+            console.log("LOG: /Register - Error Salting the password");
             var responseObject = {message : "Error!"};
-            return   res.status(500).send(responseObject);
+            res.status(500).send(responseObject);
+        }else{
+            console.log("The salted password is "+hash);
+            var newuser = new User();
+            newuser.username = username;
+            newuser.password = hash;
+            
+            newuser.save(function(err, savedUser){
+
+                if(err){
+                    console.log("LOG: /Register - Couldnot register the user");
+                    var responseObject = {message : "Error!"};
+                    return   res.status(500).send(responseObject);
+                }
+            });
         }
     });
-    
     
     var newProfile = new Profile();
     newProfile.username = username;
@@ -100,21 +121,18 @@ router.post('/register', function(req, res){
         if(err){
             console.log("LOG: /Register - Couldnot create the user profile");
             Profile.remove({username: username});
-            
+
             var responseObject = {message : "Error!"};
-            return   res.status(500).send(responseObject);
+            res.status(500).send(responseObject);
         }
         else{
-            
             var responseObject = {  message : "Successfully Registered"};
-                    res.status(200).json(responseObject);
+            res.status(200).json(responseObject);
         }
         
     });    
 });
-
-
-
+/* GET USER PROFILE DETAILS */
 router.get('/profile/:username', checkAuth, function(req, res){
     
     var finduser = req.params.username;
@@ -137,6 +155,7 @@ router.get('/profile/:username', checkAuth, function(req, res){
 
 });
 
+/* UPDATE USER PROFILE DETAILS */
 router.put('/profile/:username', checkAuth,function(req, res){
     
     var finduser = req.params.username;
@@ -433,7 +452,6 @@ router.get('/requests/:username', checkAuth,function(req, res){
     
 });
 
-
 /* Get all the ride requests for a User */
 router.get('/riderequests/:username', checkAuth,function(req, res){
     
@@ -540,7 +558,7 @@ router.get('/notification/:username', function(req, res){
     });
 });
 
-
+/* For the requested user to get notification */
 router.get('/notifyrequester/:username', function(req, res){
     
     var username = req.params.username;
