@@ -401,6 +401,99 @@ console.log("Recieved values are   "+ req.body.eventLocation
     
 });
 
+/* Update Event endpoint */
+router.put('/event', checkAuth, function(req, res){
+    /*
+    {
+    "eventType":"Coding",
+    
+    "eventLocationLng":"-121.42347339999999",
+    "preferences":"Both",
+    
+    "seatsAvailable":"4",
+    "eventLocationLat":"38.5591398",
+    
+    "eventTimeHour":"17",
+    "dateMonth":"2",
+    
+    "pickup":[
+    {"pickuplocation":"Arden-Arcade, CA, USA","pickuptime":"16:45"},
+    {"pickuplocation":"McClellan Park, CA, USA","pickuptime":"16:30"}
+    ],
+    "dateDay":"25",
+    
+    "eventTimeMinute":"30",
+    "username":"Mavharsha",
+    
+    "privacyType":"0",
+    "eventLocation":"6000 J Street, Sacramento, CA 95819, United States",
+    
+    "dateYear":"2016",
+    "eventName":"Hack For Sac"
+    }
+    */
+    
+var pickup = req.body.pickup;
+console.log("Eventid is "+req.body.eventid);
+
+console.log("Recieved values are   "+ req.body.eventName
+                                +" "+ req.body.eventType
+                                +" "+ req.body.seatsAvailable
+                                +" "+ req.body.preferences);
+    
+console.log("Privacy type is "+req.body.privacyType);
+    
+ console.log("Recieved values are  "+ req.body.dateDay
+                                +" "+ req.body.dateMonth
+                                +" "+ req.body.dateYear);
+
+console.log("Recieved values are   "+ req.body.eventTimeHour
+                                +" "+ req.body.eventTimeMinute);
+
+console.log("Recieved values are   "+ req.body.eventLocation);
+console.log("Recieved values are   "+ req.body.eventLocationLat
+                                +" "+ req.body.eventLocationLng);
+
+console.log("The object is " + JSON.stringify(pickup));
+    
+    
+    var condition = {_id: req.body.eventid};
+    var values = {
+                    eventname: req.body.eventName,
+                    eventtype: req.body.eventType,
+                    privacytype : req.body.privacyType,            
+                    seatsavailable: req.body.seatsAvailable,
+                    preferences: req.body.preferences,
+
+                    dateday     :  req.body.dateDay,
+                    datemonth   :  req.body.dateMonth,
+                    dateyear    :  req.body.dateYear,
+
+                    eventtimehour: req.body.eventTimeHour,
+                    eventtimeminute: req.body.eventTimeMinute,
+
+                    eventlocationlat: req.body.eventLocationLat,
+                    eventlocationlng: req.body.eventLocationLng,
+                    eventlocation: req.body.eventLocation,
+
+                    pickup: req.body.pickup
+                };
+    
+    
+            Event.update(condition, values, function (err, myDocument) {
+
+                                if(err){
+                                    console.log(err);
+                                    res.status(500).json({message: "Error"});
+                                }
+                                else
+                                {
+                                    res.status(200).json({message: "Success"});
+                                }
+            });
+
+});
+
 /* When someone request you for a ride */
 router.post('/request', checkAuth, function(req, res){
    
