@@ -11,7 +11,8 @@ var requestSchema = new mongoose.Schema({
     pickupLocation: String,
     status: {type: String, default: "Not Decided"},      // Not Decided, Accepted, Rejected
     seen: {type: Boolean, default: false},         // false: Unseen, true: Seen
-    requesterseen: {type: Boolean, default: false}
+    requesterseen: {type: Boolean, default: false},
+    edited: {type: Boolean, default: false}
 });
 
 var Requests = mongoose.model('requests'/*Collection name*/, requestSchema);

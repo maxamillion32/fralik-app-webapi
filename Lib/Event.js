@@ -21,7 +21,7 @@ var eventSchema = new mongoose.Schema({
     eventlocationlng: Number,
     eventlocation: String,
     
-    pickup: [{pickuptime: String, pickuplocation: String}],
+    pickup: [{pickuptime: String, pickuplocation: String}]
 
 });
 

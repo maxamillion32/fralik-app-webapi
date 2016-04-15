@@ -102,36 +102,36 @@ router.post('/register', function(req, res){
             newuser.save(function(err, savedUser){
 
                 if(err){
-                    console.log("LOG: /Register - Couldnot register the user");
+                    console.log("LOG: /Register - Couldnot register the user new user could not be created");
                     var responseObject = {message : "Error!"};
-                    return   res.status(500).send(responseObject);
+                    res.status(500).send(responseObject);
+                }else{
+                    
+                    var newProfile = new Profile();
+                    newProfile.username = username;
+                    newProfile.phonenumber = phonenumber;
+                    newProfile.firstname = firstname;
+                    newProfile.lastname = lastname;
+
+                    newProfile.save(function(err, savedProfile){
+                        if(err){
+                            console.log("LOG: /Register - Couldnot create the user profile. ");
+                            var responseObject = {message : "Error!"};
+                            res.status(500).send(responseObject);
+                        }
+                        else{
+                            var responseObject = {  message : "Successfully Registered"};
+                            res.status(200).json(responseObject);
+                        }
+                    });    
+                    
                 }
             });
         }
     });
-    
-    var newProfile = new Profile();
-    newProfile.username = username;
-    newProfile.phonenumber = phonenumber;
-    newProfile.firstname = firstname;
-    newProfile.lastname = lastname;
-    
-    newProfile.save(function(err, savedProfile){
-        
-        if(err){
-            console.log("LOG: /Register - Couldnot create the user profile");
-            Profile.remove({username: username});
-
-            var responseObject = {message : "Error!"};
-            res.status(500).send(responseObject);
-        }
-        else{
-            var responseObject = {  message : "Successfully Registered"};
-            res.status(200).json(responseObject);
-        }
-        
-    });    
 });
+
+
 /* GET USER PROFILE DETAILS */
 router.get('/profile/:username', checkAuth, function(req, res){
     
@@ -488,10 +488,59 @@ console.log("The object is " + JSON.stringify(pickup));
                                 }
                                 else
                                 {
-                                    res.status(200).json({message: "Success"});
+                                
+                                    var condition_1 = { eventid: req.body.eventid},
+                                        updatevalue = {$set: {edited: true}},
+                                        options = { multi: true }
+                                    Requests.update(condition_1,updatevalue, options,function(err, request){
+                                        if(err){
+                                                res.status(500).json({message: "Error"});
+                                        }else{
+                                                console.log(JSON.stringify(request));
+                                                console.log("Updated the request collection");
+                                                res.status(200).json({message: "Success"});
+                                        }
+                                    });
                                 }
             });
 
+});
+
+
+
+/* Get updates if Events are requested */
+router.get('/editupdate/:username',function(req, res){
+    
+    var username = req.params.username;
+    console.log(username);
+
+        Requests.findOne({requesteduser: username, edited: true}, function(err, request){
+           
+            if(err){
+                res.status(500).jsonp({message : "Error!"});
+            }
+            else{
+                if(request!=null){
+                    console.log("Sending"+JSON.stringify(request));
+                    
+                    var condition = {_id: request._id},
+                        values = {$set: {edited: false}};
+                    Requests.update(condition, values, function(err, update){
+                        
+                        if(err){
+                            res.status(500).jsonp({message : "Error!"});
+                        }
+                        else{
+                            res.status(200).jsonp(request);
+                        }
+            
+                    });
+                                        
+                }else{
+                    res.status(500).jsonp({message: "Error!"});
+                }
+            }
+        });          
 });
 
 /* When someone request you for a ride */
@@ -701,6 +750,39 @@ router.get('/notifyrequester/:username', function(req, res){
         
     
 });    
+
+
+
+/* Have any events today */
+router.get('/event/today/:username/:day/:hour', function(req, res){
+    
+   var date = new Date(),
+       month = date.getMonth(),
+       year = date.getFullYear();           // For PST
+
+    var username = req.params.username,
+        day = req.params.day,
+        hour = req.params.hour;
+    
+    console.log(req.params);
+
+    console.log("The day and hour is in the params "+ req.params.day+" "+ req.params.hour);
+    
+    console.log(month +"/"+day+"/"+year);    
+    
+    Event.findOne({username: username, dateday: day, datemonth: month, dateyear: year}, function(err, event){
+
+        if(err){
+            res.status(404).jsonp({message: "Error"});
+        }else{
+            if(event!=null){
+                            res.status(200).jsonp(event);   
+            }else{
+                            res.status(404).jsonp({message: "Error"});
+            }
+        }
+    });
+});
 /*router.post('/createevent', middlewareAuth,function(req, res){});
 router.get('/getevents', middlewareAuth,function(req, res){})
 router.post('/requestevent', middlewareAuth,function(req, res){});
