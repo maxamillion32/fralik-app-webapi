@@ -11,12 +11,14 @@ var secret = 'saldjjakdhadlkqwiekasdljafaljsnadiwsx';
 // Middleware that authenticates all the secret pages
 function checkAuth(req, res, next){
     var token = req.headers.token;
-    console.log(token);
+    console.log("Token recieved "+token);
     
     if (token) {    
         try{
             var decoded = jwt.decode(token, secret);
             req.decoded = decoded;
+            console.log("Valid tokens "+token);
+
             next();
         }
         catch(err)
@@ -51,17 +53,19 @@ router.post('/login', function(req, res){
                 res.status(404).jsonp({message : "Username not found"});
             }
         else{
-
+                console.log(JSON.stringify(user));
+                console.log("Sync compare"+bcrypt.compareSync(password, user.password)); 
+            
                 bcrypt.compare(password, user.password, function(err, success) {
     
                     if(err){
                             console.log(err);
-                            console.log(JSON.stringify(res));
-
+                            res.status(403).json({message : "Invalid User"});
+                        }else if(!success){
                             res.status(403).json({message : "Invalid User"});
                         }
                         else{
-                            
+                            console.log(JSON.stringify(success));
                             var payload = { user: user.username };
                             var token = jwt.encode(payload, secret);
 
@@ -762,15 +766,15 @@ router.get('/event/today/:username/:day/:hour', function(req, res){
 
     var username = req.params.username,
         day = req.params.day,
-        hour = req.params.hour;
+        hour = Number(req.params.hour) + 3;
     
     console.log(req.params);
 
     console.log("The day and hour is in the params "+ req.params.day+" "+ req.params.hour);
     
-    console.log(month +"/"+day+"/"+year);    
+    console.log(month +"/"+day+"/"+year+" time is "+ hour);    
     
-    Event.findOne({username: username, dateday: day, datemonth: month, dateyear: year}, function(err, event){
+    Event.findOne({username: username, dateday: day, datemonth: month, dateyear: year , eventtimehour: hour}, function(err, event){
 
         if(err){
             res.status(404).jsonp({message: "Error"});
