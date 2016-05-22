@@ -6,6 +6,8 @@ var User = require('../Lib/User');
 var Event = require('../Lib/Event');
 var Profile = require('../Lib/Profile');
 var Requests = require('../Lib/Requests');
+var EventController = require('../Controllers/EventController.js')(Event);
+var RequestController = require('../Controllers/RequestController.js')(Requests);
 var secret = 'saldjjakdhadlkqwiekasdljafaljsnadiwsx';
 
 // Middleware that authenticates all the secret pages
@@ -18,7 +20,6 @@ function checkAuth(req, res, next){
             var decoded = jwt.decode(token, secret);
             req.decoded = decoded;
             console.log("Valid tokens "+token);
-
             next();
         }
         catch(err)
@@ -230,75 +231,15 @@ router.put('/profile/:username', checkAuth,function(req, res){
 
     
 });
-/* Get all the events */
-router.get('/events', checkAuth,function(req, res){
-    
-    
-    Event.find({privacytype : 0}, function(err, events){
-        
-        if(err){
-            console.log(err);
-            var responseobject = {message : "Error"};
-            res.status(500).jsonp(responseobject);
-        }else{
-            
-            var responseobject = {
-                                    message: "Success",
-                                    details:  events
-                                 };
-            res.status(200).jsonp(responseobject);
-            
-        }
-        
-    });
-});
+/* Get all public events */
+router.get('/events', checkAuth, EventController.publicEvents);
 
 
 /* Get All the events created by a user*/
-router.get('/events/:username', checkAuth,function(req, res){
-    var username = req.params.username;
-    
-    Event.find({username: username}, function(err, events){
-        
-        if(err){
-            console.log(err);
-            var responseobject = {message : "Error"};
-            res.status(500).jsonp(responseobject);
-        }else{
-            
-            var responseobject = {message: "Success",
-                                  details:  events
-                                 };
-            res.status(200).jsonp(responseobject);
-            
-        }
-        
-    });
-});
+router.get('/events/:username', checkAuth, EventController.getEventsByUser);
 
 /* Get a specific  event based on the parameter */
-router.get('/event/:eventid', checkAuth,function(req, res){
-    
-    var eventid = req.params.eventid;
-    console.log(eventid);
-    
-    Event.find({_id: eventid}, function(err, events){
-        
-        if(err){
-            console.log(err);
-            var responseobject = {message : "Error"};
-            res.status(500).jsonp(responseobject);
-        }else{
-            
-            var responseobject = {message: "Success",
-                                  details:  events
-                                 };
-            res.status(200).jsonp(responseobject);
-            
-        }
-        
-    });
-});
+router.get('/event/:eventid', checkAuth, EventController.getEventByEventId);
 
 /* Create Event endpoint */
 router.post('/createevent', checkAuth, function(req, res){
