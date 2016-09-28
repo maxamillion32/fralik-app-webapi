@@ -1,3 +1,4 @@
+/*Edited line 239 for errors*/
 var express = require('express');
 var router = express.Router();
 var jwt = require('jwt-simple');
@@ -235,8 +236,8 @@ router.put('/profile/:username', checkAuth,function(req, res){
 router.get('/events', checkAuth, EventController.publicEvents);
 
 
-/* Get All the events created by a user*/
-router.get('/events/:username', checkAuth, EventController.getEventsByUser);
+/* Get All the events created by a user---- Edited .getEventsByUser to .getEventByUser*/
+router.get('/events/:username', checkAuth, EventController.getEventByUser);
 
 /* Get a specific  event based on the parameter */
 router.get('/event/:eventid', checkAuth, EventController.getEventByEventId);
