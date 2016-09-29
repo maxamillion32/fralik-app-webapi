@@ -70,4 +70,4 @@ var EventController = function(Event){
     };
 }
 
-module.exprorts = EventController;
+module.exports = EventController;
