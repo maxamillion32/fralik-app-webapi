@@ -1,7 +1,7 @@
-#HopIn WebApi
+#Fralik WebApi
 Author
-Sree Harsha Mamilla
-github.com/mavharsha
+Derrick Miller
+github.com/maxamillion32
 
 
 Thanks.
