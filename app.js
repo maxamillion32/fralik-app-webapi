@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(helmet())
 
-mongoose.connect('mongodb://localhost/hopin', options);
+mongoose.connect('mongodb://localhost/fralik', options);
 app.use('/', routes);
 
 // catch 404 and forward to error handler
